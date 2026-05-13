@@ -32,3 +32,31 @@ Plumber Bot is an SMS-driven intake, triage, and dispatch helper for service bus
 - Node.js + TypeScript + Express.
 - SQLite for persistence (file: `plumber-bot.db`).
 - Simple HTML/JS dashboard (no frontend framework).
+
+## Running locally
+
+### Development
+
+- Start the TypeScript server with automatic reload:
+
+```bash
+pnpm dev
+```
+
+This runs `tsx src/server.ts` and serves the app on port 3000 by default.
+
+### Production-style test (compiled)
+
+- Build TypeScript to JavaScript and run from `dist`:
+
+```bash
+npx pnpm build
+npx pnpm start
+```
+
+This runs `tsc` to emit `dist/` and then `node dist/server.js`, matching how the app will run in production.
+
+### Database
+
+- Currently using a local SQLite file: `plumber-bot.db`.
+- Driver is in flux while testing deployment options (`sqlite3` vs `better-sqlite3`) so DB access code may change; for now it assumes a single local file DB in the project root.
