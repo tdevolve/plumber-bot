@@ -60,3 +60,30 @@ This runs `tsc` to emit `dist/` and then `node dist/server.js`, matching how the
 
 - Currently using a local SQLite file: `plumber-bot.db`.
 - Driver is in flux while testing deployment options (`sqlite3` vs `better-sqlite3`) so DB access code may change; for now it assumes a single local file DB in the project root.
+
+## Workflow overview
+
+This bot follows a simple pipeline that can be reused for other verticals (dental, wound care, etc.):
+
+1. **Intake (SMS or chat)**
+   - Twilio (or another channel) sends a webhook to `POST /twilio`.
+   - The request is normalized into a `job` record and saved in SQLite (`plumber-bot.db`).
+
+2. **Triage**
+   - `src/services/triage.ts` inspects the free-text issue plus urgency.
+   - It calculates:
+     - `triage_risk_score` (numeric)
+     - `triage_priority_band` (LOW / NORMAL / HIGH / CRITICAL)
+     - `triage_action` (e.g. `call_now`, `schedule_today`, `schedule_later`)
+
+3. **Dispatch suggestion**
+   - A simple dispatcher looks at address + triage output.
+   - It chooses a `recommended_tech_id` and `recommended_slot` and stores them back on the job row.
+
+4. **Operator dashboard**
+   - `GET /dashboard` serves `public/admin.html`.
+   - Frontend calls `GET /admin/jobs` to render:
+     - customer + issue
+     - urgency + priority badge
+     - risk score + triage action
+     - recommended tech + time slot
