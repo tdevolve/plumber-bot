@@ -1,7 +1,6 @@
 import express from 'express';
 import { json, urlencoded } from 'express';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { config } from './lib/config';
 import { twilioRouter } from './routes/twilio';
 import { adminRouter } from './routes/admin';
@@ -10,19 +9,19 @@ import './db/db';
 
 const app = express();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// __dirname works in CJS-compiled output; TS will down-compile this import.
+const staticRoot = path.join(__dirname, '../public');
 
 app.use(urlencoded({ extended: false }));
 app.use(json());
-app.use(express.static(path.join(__dirname, '../public')));
+app.use(express.static(staticRoot));
 
 app.get('/health', (_req, res) => {
   res.json({ ok: true });
 });
 
 app.get('/dashboard', (_req, res) => {
-  res.sendFile(path.join(__dirname, '../public/admin.html'));
+  res.sendFile(path.join(staticRoot, 'admin.html'));
 });
 
 app.use('/twilio', twilioRouter);
