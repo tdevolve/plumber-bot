@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Plumber Bot Admin</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body { font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif; margin: 0; background: #f6f4ef; color: #222; }
+    header { background: #0f5c60; color: #fff; padding: 16px 20px; }
+    header h1 { margin: 0; font-size: 20px; }
+    header p { margin: 4px 0 0; font-size: 14px; opacity: .9; }
+    main { max-width: 1100px; margin: 0 auto; padding: 20px; }
+    .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 12px; }
+    button { background: #0f5c60; color: #fff; border: none; border-radius: 6px; padding: 8px 12px; cursor: pointer; font-size: 14px; }
+    table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; }
+    th, td { padding: 8px 10px; border-bottom: 1px solid #e4ddd2; text-align: left; font-size: 13px; vertical-align: top; }
+    th { background: #f1ebe2; text-transform: uppercase; font-size: 11px; letter-spacing: .05em; color: #555; }
+    .badge { display: inline-block; padding: 2px 6px; border-radius: 999px; font-size: 11px; text-transform: uppercase; }
+    .badge-critical { background: #8b1e3f; color: #fff; }
+    .badge-high { background: #c7561e; color: #fff; }
+    .badge-normal { background: #2f6f3e; color: #fff; }
+    .badge-low { background: #888; color: #fff; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Plumber Bot Admin</h1>
+    <p>Live jobs with triage risk, priority, and dispatch suggestions</p>
+  </header>
+  <main>
+    <div class="toolbar">
+      <h2 style="margin:0;font-size:18px;">Jobs</h2>
+      <button id="refreshBtn">Refresh</button>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Customer</th>
+          <th>Phone</th>
+          <th>Issue</th>
+          <th>Urgency</th>
+          <th>Priority</th>
+          <th>Risk</th>
+          <th>Action</th>
+          <th>Recommended</th>
+        </tr>
+      </thead>
+      <tbody id="jobsBody"></tbody>
+    </table>
+  </main>
+  <script>
+    function priorityBadge(band) {
+      if (!band) return '';
+      const b = String(band).toLowerCase();
+      const cls =
+        b === 'critical' ? 'badge badge-critical' :
+        b === 'high' ? 'badge badge-high' :
+        b === 'low' ? 'badge badge-low' :
+        'badge badge-normal';
+      return `<span class="${cls}">${b}</span>`;
+    }
+
+    async function loadJobs() {
+      const res = await fetch('/admin/jobs');
+      const json = await res.json();
+      const jobs = json.data || [];
+      const body = document.getElementById('jobsBody');
+      body.innerHTML = jobs.map(j => {
+        const rec = (j.recommended_slot || j.recommended_tech_id)
+          ? `${j.recommended_slot || ''} (tech #${j.recommended_tech_id || '?'})`
+          : '';
+        return `
+        <tr>
+          <td>${j.id}</td>
+          <td>${j.customer_name || ''}</td>
+          <td>${j.phone || ''}</td>
+          <td>${j.issue || ''}</td>
+          <td>${j.urgency || ''}</td>
+          <td>${priorityBadge(j.triage_priority_band)}</td>
+          <td>${j.triage_risk_score ?? ''}</td>
+          <td>${j.triage_action || ''}</td>
+          <td>${rec}</td>
+        </tr>
+      `;
+      }).join('');
+    }
+
+    document.getElementById('refreshBtn').addEventListener('click', loadJobs);
+    loadJobs();
+  </script>
+</body>
+</html>
